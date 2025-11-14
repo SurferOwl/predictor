@@ -1,0 +1,530 @@
+Group 1:
+  canonical: abdominal_or_back_pain
+    merged: severe_abdominal_or_back_pain
+
+Group 2:
+  canonical: abdominal_pain
+    merged: abdominal_pain_or_discomfort
+    merged: severe_abdominal_pain
+    merged: pain_in_the_abdomen
+    merged: abdominal_discomfort
+
+Group 3:
+  canonical: blood_in_urine
+    merged: blood_in_the_urine
+
+Group 4:
+  canonical: blurred_or_distorted_vision
+    merged: blurred_or_distorted_central_vision
+    merged: blurred_and_distorted_vision
+
+Group 5:
+  canonical: blurry_vision
+    merged: blurred_vision
+
+Group 6:
+  canonical: bruising
+    merged: easy_bruising
+    merged: easy_or_excessive_bruising
+    merged: easy_bleeding_or_bruising
+    merged: easy_bruising_and_bleeding
+    merged: easy_bruising_or_bleeding
+
+Group 7:
+  canonical: chest_pain
+    merged: chest_pain_or_discomfort_angina
+    merged: chest_discomfort_or_tightness
+    merged: chest_pain_or_angina
+    merged: chest_pain_or_discomfort
+    merged: chest_discomfort
+
+Group 8:
+  canonical: chest_pain_sharp_and_stabbing
+    merged: sharp__stabbing__tearing__or_ripping_chest_pain
+
+Group 9:
+  canonical: developmental_delays
+    merged: developmental_delays_in_children
+
+Group 10:
+  canonical: difficulty_swallowing
+    merged: difficulty_swallowing_or_breathing
+    merged: difficulty_swallowing_or_speaking
+
+Group 11:
+  canonical: dizziness
+    merged: dizziness_or_vertigo
+
+Group 12:
+  canonical: prolonged_bleeding_or_bruising
+    merged: excessive_bleeding_and_bruising
+
+Group 13:
+  canonical: daytime_sleepiness
+    merged: excessive_daytime_sleepiness
+
+Group 14:
+  canonical: excessive_hair_growth
+    merged: excessive_hair_growth_in_women
+
+Group 15:
+  canonical: eye_pain
+    merged: severe_eye_pain
+    merged: eye_pain_or_discomfort
+
+Group 16:
+  canonical: eye_redness
+    merged: redness_of_eyes
+
+Group 17:
+  canonical: flank_pain
+    merged: back_or_flank_pain
+
+Group 18:
+  canonical: urinary_tract_infection
+    merged: frequent_urinary_tract_infections
+    merged: urinary_tract_infections
+
+Group 19:
+  canonical: gradual_hearing_loss
+    merged: hearing_loss_gradual_and_progressive
+
+Group 20:
+  canonical: gradual_vision_loss
+    merged: gradual_loss_of_peripheral_vision
+    merged: gradual_loss_of_vision
+
+Group 21:
+  canonical: growth_on_the_conjunctiva_white_part_of_the_eye
+    merged: yellowish_or_white_growth_on_the_conjunctiva_eye_s_surface
+
+Group 22:
+  canonical: heavy_menstrual_periods
+    merged: heavy_or_prolonged_menstrual_periods
+
+Group 23:
+  canonical: joint_pain
+    merged: intense_joint_pain
+
+Group 24:
+  canonical: irregular_heartbeat
+    merged: irregular_or_rapid_heartbeat
+    merged: rapid_or_irregular_heartbeats
+    merged: irregular_heart_beat
+    merged: fast_or_irregular_heartbeat
+
+Group 25:
+  canonical: joint_swelling
+    merged: swelling_joints
+
+Group 26:
+  canonical: lump_or_swelling_in_the_testicles
+    merged: lump_or_swelling_in_either_testicle
+
+Group 27:
+  canonical: muscle_pain_and_stiffness
+    merged: muscle_aches_and_stiffness
+
+Group 28:
+  canonical: neck_pain
+    merged: neck_or_back_pain
+    merged: severe_neck_pain
+    merged: discomfort_or_pain_in_the_neck
+
+Group 29:
+  canonical: pain_with_bowel_movements
+    merged: pain_during_bowel_movements
+
+Group 30:
+  canonical: low_back_pain__radiating_along_both_legs
+    merged: pain_radiating_from_the_lower_back_to_the_leg
+
+Group 31:
+  canonical: painful_intercourse
+    merged: discomfort_or_pain_during_intercourse
+    merged: pain_during_intercourse
+    merged: pain_during_sexual_intercourse
+    merged: pain_with_sexual_intercourse
+    merged: painful_sexual_intercourse
+
+Group 32:
+  canonical: red_lump_or_swelling_on_the_eyelid
+    merged: painful_lump_or_swelling_on_the_eyelid
+
+Group 33:
+  canonical: pelvic_pain
+    merged: discomfort_in_the_pelvic_area
+    merged: pelvic_pain_or_discomfort
+    merged: pelvic_pain_or_pressure
+
+Group 34:
+  canonical: severe_headache
+    merged: severe_headaches
+
+Group 35:
+  canonical: swollen
+    merged: swelling
+
+Group 36:
+  canonical: swelling_of_arms
+    merged: swelling_in_arms_or_legs
+
+Group 37:
+  canonical: swollen_lymph_nodes
+    merged: swelled_lymph_nodes
+    merged: swollen_lymph_nodes_near_the_infection
+
+Group 38:
+  canonical: yellowing_of_eyes
+    merged: yellowing_of_the_skin_and_eyes
+
+Group 39:
+  canonical: abdominal_cramps
+    merged: abdominal_pain_or_cramping
+    merged: abdominal_pain_or_cramps
+    merged: cramping_abdominal_pain
+
+Group 40:
+  canonical: abdominal_distension
+    merged: distention_of_abdomen
+    merged: abdominal_distention
+
+Group 41:
+  canonical: swelling_of_stomach
+    merged: abdominal_pain_or_swelling
+    merged: abdominal_swelling_or_pain
+    merged: swelling_in_the_abdomen
+    merged: swelling_of_abdomen
+
+Group 42:
+  canonical: abnormal_sweating
+    merged: excessive_sweating
+
+Group 43:
+  canonical: bleeding_after_sex
+    merged: bleeding_after_sexual_intercourse
+
+Group 44:
+  canonical: bloody_stool
+    merged: bloody_stools
+
+Group 45:
+  canonical: burning_sensation_when_urinating
+    merged: burning_sensation_during_urination
+
+Group 46:
+  canonical: changes_in_sleep_and_appetite
+    merged: changes_in_appetite_or_sleep_patterns
+
+Group 47:
+  canonical: vision_changes
+    merged: changes_in_vision
+
+Group 48:
+  canonical: chest_congestion
+    merged: chest_tightness_or_congestion
+
+Group 49:
+  canonical: impaired_color_vision
+    merged: color_vision_impairment
+
+Group 50:
+  canonical: loss_of_appetite
+    merged: decreased_appetite
+
+Group 51:
+  canonical: decreased_vision
+    merged: decreased_peripheral_vision
+
+Group 52:
+  canonical: problem_concentrating
+    merged: difficulty_concentrating
+
+Group 53:
+  canonical: difficulty_emptying_the_bladder
+    merged: inability_to_completely_empty_the_bladder
+    merged: incomplete_emptying_of_your_bladder
+
+Group 54:
+  canonical: urination_difficulty
+    merged: difficulty_in_urination
+
+Group 55:
+  canonical: difficulty_walking
+    merged: difficulty_walking_or_moving
+    merged: walking_difficulty
+
+Group 56:
+  canonical: eye_discharge
+    merged: discharge_from_the_eye
+
+Group 57:
+  canonical: discomfort_or_pain
+    merged: pain_or_discomfort
+
+Group 58:
+  canonical: dizziness_or_lightheadedness
+    merged: feeling_dizzy_or_lightheaded
+
+Group 59:
+  canonical: ear_drainage
+    merged: drainage_of_fluid_or_pus_from_the_ear
+    merged: fluid_drainage_from_the_ear
+    merged: drainage_of_fluid_from_the_ear
+    merged: drainage_from_the_ear
+
+Group 60:
+  canonical: drooping_of_the_mouth_or_eyelid
+    merged: drooping_of_the_face__such_as_the_eyelid_or_corner_of_the_mouth
+
+Group 61:
+  canonical: enlarged_spleen
+    merged: enlarged_spleen_or_liver
+
+Group 62:
+  canonical: heavy_menstrual_bleeding
+    merged: excessive_menstrual_bleeding
+
+Group 63:
+  canonical: pain_with_eye_movement
+    merged: eye_pain_with_eye_movement
+
+Group 64:
+  canonical: fear_of_gaining_weight
+    merged: intense_fear_of_gaining_weight_or_becoming_fat
+
+Group 65:
+  canonical: halos_around_lights
+    merged: seeing_halos_around_lights
+    merged: seeing_colored_halos_around_lights
+
+Group 66:
+  canonical: health_issues
+    merged: health_problems
+
+Group 67:
+  canonical: irregular_heartbeat_or_palpitations
+    merged: heart_palpitations_rapid_or_irregular_heartbeat
+
+Group 68:
+  canonical: hormonal_imbalances
+    merged: including_hormonal_imbalances
+
+Group 69:
+  canonical: increased_heart_rate
+    merged: increased_heart_rate_and_blood_pressure
+
+Group 70:
+  canonical: sensitivity_to_light_photophobia
+    merged: increased_sensitivity_to_light_photophobia
+
+Group 71:
+  canonical: intellectual_disability
+    merged: severe_intellectual_disability
+
+Group 72:
+  canonical: jaundice_yellowing_of_the_skin_and_eyes
+    merged: yellowing_of_skin_and_whites_of_the_eyes__jaundice
+
+Group 73:
+  canonical: joint_and_muscle_pain
+    merged: muscle_and_joint_pain
+
+Group 74:
+  canonical: limited_range_of_motion
+    merged: restricted_range_of_motion
+
+Group 75:
+  canonical: mood_changes
+    merged: quick_mood_changes
+
+Group 76:
+  canonical: nausea_or_vomiting
+    merged: nausea_and_vomiting
+
+Group 77:
+  canonical: numbness_or_tingling
+    merged: tingling_or_numbness
+
+Group 78:
+  canonical: numbness_or_tingling_in_the_hand_arm
+    merged: numbness_or_tingling_of_the_palm_of_the_hand
+
+Group 79:
+  canonical: numbness_or_weakness_in_the_arms_or_legs
+    merged: weakness_or_numbness_of_arms__legs__face
+
+Group 80:
+  canonical: weakness_or_numbness
+    merged: numbness_or_weakness_in_the_extremities
+
+Group 81:
+  canonical: painful_periods
+    merged: painful_menstrual_periods
+
+Group 82:
+  canonical: peeling_skin
+    merged: skin_peeling
+
+Group 83:
+  canonical: petechial_rash_small_red_or_purple_spots
+    merged: petechiae_red_or_purple_spots_on_the_skin
+
+Group 84:
+  canonical: poor_coordination
+    merged: lack_of_coordination
+
+Group 85:
+  canonical: prolonged_bleeding_from_cuts
+    merged: prolonged_or_excessive_bleeding_from_cuts_or_injuries
+
+Group 86:
+  canonical: prolonged_bleeding
+    merged: prolonged_or_heavy_bleeding
+
+Group 87:
+  canonical: fast_heart_rate
+    merged: rapid_heart_rate
+
+Group 88:
+  canonical: scaly_skin_patches
+    merged: scaly_patches_on_the_skin
+
+Group 89:
+  canonical: light_sensitivity
+    merged: sensitivity_to_light
+    merged: sensitivity_to_light_and_sound
+    merged: sensitivity_to_light_or_noise
+
+Group 90:
+  canonical: skin_rash
+    merged: skin_rashes
+
+Group 91:
+  canonical: vision_loss
+    merged: sudden_vision_loss
+    merged: loss_of_vision
+
+Group 92:
+  canonical: swollen_legs
+    merged: swelling_in_the_ankles
+    merged: swelling_in_the_legs_and_ankles
+    merged: swelling_of_the_legs_or_ankles
+    merged: swollen_legs_or_ankles
+    merged: swelling_due_to_the_body_keeping_in_fluid__may_be_seen_in_the_legs__ankles__and_feet
+    merged: swelling_of_legs
+    merged: swelling_of_ankles
+
+Group 93:
+  canonical: swollen_and_bleeding_gums
+    merged: bleeding_and_swelling___rare__in_the_gums
+
+Group 94:
+  canonical: swollen_lymph_nodes_in_the_groin
+    merged: swollen_lymph_nodes_in_the_groin_or_anal_region
+
+Group 95:
+  canonical: tetany_muscle_spasms
+    merged: prolonged_muscle_spasms_tetany
+
+Group 96:
+  canonical: numbness_and_tingling_of_hands_or_feet
+    merged: tingling_or_numbness_in_the_hands_and_feet
+    merged: numbness_and_tingling_of_fingers_and_toes
+
+Group 97:
+  canonical: tinnitus_ringing_in_the_ears
+    merged: ringing__tinnitus__in_the_affected_ear
+
+Group 98:
+  canonical: urinary_frequency_or_urgency
+    merged: urinary_urgency_or_frequency
+
+Group 99:
+  canonical: incontinence
+    merged: urinary_incontinence
+
+Group 100:
+  canonical: weak_grip
+    merged: weak_grip_strength
+
+Group 101:
+  canonical: fluid_overload
+    merged: fluid_overload_1
+
+Group 102:
+  canonical: weakness_in_limbs
+    merged: weakness_in_a_limb
+
+Group 103:
+  canonical: stiff_neck
+    merged: stiffness_in_the_neck
+
+Group 104:
+  canonical: single_crease_in_the_palm_of_the_hand
+    merged: single_crease_in_the_palm_of_the_hand_1
+
+Group 105:
+  canonical: blue_lips_and_fingernails
+    merged: bluish_skin_fingernails_and_lips
+
+Group 106:
+  canonical: kidney_failure
+    merged: progressive_kidney_failure
+
+Group 107:
+  canonical: pain_in_throat
+    merged: severe_pain_in_the_throat
+
+Group 108:
+  canonical: jerky_eye_movements__nystagmus
+    merged: repetitive_eye_movements__nystagmus
+    merged: jerky_or_abnormal_eye_movements__nystagmus__late_in_the_disease
+    merged: strange_eye_movements__nystagmus
+    merged: unusual_rapid_eye_movements__nystagmus
+
+Group 109:
+  canonical: difficulty_doing_more_than_one_task_at_a_time
+    merged: difficulty_performing_more_than_one_task_at_a_time
+
+Group 110:
+  canonical: getting_lost_on_familiar_routes
+    merged: getting_lost_on_familiar_routes_1
+
+Group 111:
+  canonical: losing_interest_in_things_previously_enjoyed__flat_mood
+    merged: losing_interest_in_things_previously_enjoyed_and_being_in_a_flat_mood
+
+Group 112:
+  canonical: trouble_feeding
+    merged: feeding_problems
+
+Group 113:
+  canonical: abnormal_nails
+    merged: nail_abnormalities
+
+Group 114:
+  canonical: repeats_body_movements
+    merged: repeat_body_movements_over_and_over
+
+Group 115:
+  canonical: pain_in_the_right_upper_abdomen
+    merged: abdominal_pain_in_the_upper_right_side
+    merged: pain_in_the_right_upper_part_of_the_abdomen
+    merged: pain_in_the_upper_right_part_of_the_abdomen
+
+Group 116:
+  canonical: intense_fear_of_being_abandoned
+    merged: becoming_overly_focused_on_fears_of_being_abandoned
+
+Group 117:
+  canonical: watery_diarrhea__sometimes_bloody
+    merged: watery_diarrhea__which_may_be_blood
+
+Group 118:
+  canonical: abnormal_vaginal_bleeding_after_menopause_or_between_periods
+    merged: abnormal_vaginal_bleeding_between_periods__after_intercourse__or_after_menopause
+
+Group 119:
+  canonical: pain_in_the_right_upper_or_middle_upper_abdomen_for_at_least_30_minutes_the_pain_may_be_constant_and_intense__it_can_be_mild_or_severe
+    merged: pain_in_the_right_upper_or_middle_upper_abdomen_for_at_least_30_minutes__the_pain_may_be_constant_or_cramping__it_can_feel_sharp_or_dull
