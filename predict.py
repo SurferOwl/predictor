@@ -3,6 +3,8 @@ import pickle
 import pandas as pd
 from sentence_transformers import SentenceTransformer, util
 import torch
+import requests
+import httpx
 
 # ----------------------------------------------------
 # LOAD DISEASE MODEL + SYMPTOM LIST
@@ -159,43 +161,83 @@ def severity_to_params(severity):
         threshold = 0.40
     return top_k, threshold
 
+import httpx
+
+async def fetch_user_symptoms(user_id: str):
+    url = f"http://localhost:8080/api/symptom/getAllPastWeek/{user_id}"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            data = response.json()
+        
+        # Convert to list of dicts with name, description, severity
+        symptoms = [
+            {
+                "name": item.get("name", ""),
+                "description": item.get("description", ""),
+                "severity": int(item.get("severity", 2))
+            }
+            for item in data
+        ]
+        return symptoms
+
+    except Exception as e:
+        print(f"Error fetching symptoms from API: {e}")
+        return []
 
 # ----------------------------------------------------
 # 3. EXAMPLE USAGE
 # ----------------------------------------------------
 if __name__ == "__main__":
+    """
     user_symptoms = [
     {
-        "name": "leg weakness",
-        "description": "weakness starting in the feet and moving upwards",
+        "name": "persistent sadness",
+        "description": "feeling sad or empty most of the day, nearly every day",
         "severity": 3
     },
     {
-        "name": "tingling",
-        "description": "pins and needles feeling in both legs",
-        "severity": 2
-    },
-    {
-        "name": "difficulty walking",
-        "description": "must use support to walk",
+        "name": "loss of interest",
+        "description": "no longer enjoying activities that used to be pleasurable",
         "severity": 3
     },
     {
-        "name": "reduced reflexes",
-        "description": "kneecap and ankle reflexes are weaker than usual",
+        "name": "fatigue",
+        "description": "low energy even after resting, feeling physically drained",
         "severity": 2
     },
     {
-        "name": "back pain",
-        "description": "dull back pain radiating down the legs",
+        "name": "sleep disturbance",
+        "description": "either difficulty falling asleep or waking up too early",
         "severity": 2
+    },
+    {
+        "name": "changes in appetite",
+        "description": "noticeable weight loss or gain due to increased or decreased appetite",
+        "severity": 2
+    },
+    {
+        "name": "difficulty concentrating",
+        "description": "trouble focusing, making decisions, or remembering details",
+        "severity": 2
+    },
+    {
+        "name": "feelings of worthlessness",
+        "description": "persistent guilt or feeling like a burden to others",
+        "severity": 3
     }
 ]
-
+"""
+    """user_symptoms = fetch_user_symptoms(id="68cbbc2236216b773159e994")
     result = predict_disease_from_multiple_symptoms(
         symptom_entries=user_symptoms,
         default_top_k_diseases=5
     )
+
+    print("=== Raw symptoms from API ===")
+    for i, s in enumerate(user_symptoms, 1):
+        print(f"{i}. Name: {s['name']}, Description: {s['description']}, Severity: {s['severity']}")
 
     print("=== Matched symptom columns ===")
     for item in result["per_symptom_matches"]:
@@ -206,3 +248,10 @@ if __name__ == "__main__":
     print("\n=== Top disease predictions ===")
     for d in result["disease_predictions"]:
         print(f"- {d['disease']} ({d['probability']:.3f})")
+        """
+    user_id = sys.argv[1]  # passed from Node
+    user_symptoms = fetch_user_symptoms(user_id)
+    result = predict_disease_from_multiple_symptoms(user_symptoms, default_top_k_diseases=5)
+
+    # Only print JSON so Node can parse it
+    print(json.dumps(result))
