@@ -190,7 +190,7 @@ async def fetch_user_symptoms(user_id: str):
 # 3. EXAMPLE USAGE
 # ----------------------------------------------------
 if __name__ == "__main__":
-    """
+
     user_symptoms = [
     {
         "name": "persistent sadness",
@@ -228,16 +228,10 @@ if __name__ == "__main__":
         "severity": 3
     }
 ]
-"""
-    """user_symptoms = fetch_user_symptoms(id="68cbbc2236216b773159e994")
     result = predict_disease_from_multiple_symptoms(
         symptom_entries=user_symptoms,
         default_top_k_diseases=5
     )
-
-    print("=== Raw symptoms from API ===")
-    for i, s in enumerate(user_symptoms, 1):
-        print(f"{i}. Name: {s['name']}, Description: {s['description']}, Severity: {s['severity']}")
 
     print("=== Matched symptom columns ===")
     for item in result["per_symptom_matches"]:
@@ -248,10 +242,5 @@ if __name__ == "__main__":
     print("\n=== Top disease predictions ===")
     for d in result["disease_predictions"]:
         print(f"- {d['disease']} ({d['probability']:.3f})")
-        """
-    user_id = sys.argv[1]  # passed from Node
-    user_symptoms = fetch_user_symptoms(user_id)
-    result = predict_disease_from_multiple_symptoms(user_symptoms, default_top_k_diseases=5)
 
-    # Only print JSON so Node can parse it
-    print(json.dumps(result))
+
