@@ -6,6 +6,8 @@ __pycache__/
 *.pyc
 
 # Large model files
-data/*.pkl
-data/Final_Augmented_dataset_Diseases_and_Symptoms_Revised.csv
-data/Final_Augmented_dataset_Diseases_and_Symptoms.csv
+merged/*
+model/*
+cleaned_data/*
+data/*
+

@@ -1,167 +1,116 @@
 # predict.py
 import pickle
 import pandas as pd
+from pathlib import Path
 from sentence_transformers import SentenceTransformer, util
 import torch
-import requests
 import httpx
 
-# ----------------------------------------------------
-# LOAD DISEASE MODEL + SYMPTOM LIST
-# ----------------------------------------------------
-disease_model = pickle.load(open("data/disease_model.pkl", "rb"))
+# ── paths ─────────────────────────────────────────────────────────────────────
+MODEL_DIR = Path("model")
 
-# IMPORTANT: this must match what train.py saves
-symptom_list = pickle.load(open("data/symptom_list.pkl", "rb"))
+disease_model = pickle.load(open(MODEL_DIR / "disease_model.pkl", "rb"))
+symptom_list  = pickle.load(open(MODEL_DIR / "symptom_list.pkl",  "rb"))
 
-# Nice text versions of symptoms for embeddings
-symptom_texts = [s.replace("_", " ") for s in symptom_list]
-
-# Pretrained sentence embedding model
-embedder = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-
-# Precompute embeddings for all symptom columns (once at import)
+# ── embeddings (computed once at import) ──────────────────────────────────────
+symptom_texts      = [s.replace("_", " ") for s in symptom_list]
+embedder           = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 symptom_embeddings = embedder.encode(
     symptom_texts,
     convert_to_tensor=True,
-    normalize_embeddings=True
+    normalize_embeddings=True,
 )
 
 
-# ----------------------------------------------------
-# 1. MATCH ONE (name, description) TO SYMPTOM COLUMNS
-# ----------------------------------------------------
+# ── 1. match one symptom entry to dataset columns ────────────────────────────
+
 def match_symptoms(symptom_name, description="", top_k=5, score_threshold=0.4):
-    """
-    For a single user symptom (name + description),
-    return the best matching symptom columns.
-    """
-    # Build query
     query = symptom_name.strip()
     if description:
         query += ". " + description.strip()
 
-    # Encode query
-    query_emb = embedder.encode(
-        query,
-        convert_to_tensor=True,
-        normalize_embeddings=True
-    )
+    query_emb = embedder.encode(query, convert_to_tensor=True, normalize_embeddings=True)
+    scores    = util.cos_sim(query_emb, symptom_embeddings)[0].cpu()
+    top_k     = min(top_k, len(symptom_list))
 
-    # Cosine similarity with all symptom columns
-    scores = util.cos_sim(query_emb, symptom_embeddings)[0]
-    scores = scores.cpu()
-
-    # Get top-k
-    top_k = min(top_k, len(symptom_list))
     top_scores, top_indices = torch.topk(scores, k=top_k)
 
-    results = []
-    for score, idx in zip(top_scores, top_indices):
-        score_val = float(score.item())
-        if score_val < score_threshold:
-            continue
-        col_name = symptom_list[int(idx)]
-        label = symptom_texts[int(idx)]
-        results.append(
-            {"column": col_name, "label": label, "score": score_val}
-        )
-
-    return results
+    return [
+        {
+            "column": symptom_list[int(idx)],
+            "label":  symptom_texts[int(idx)],
+            "score":  float(score.item()),
+        }
+        for score, idx in zip(top_scores, top_indices)
+        if float(score.item()) >= score_threshold
+    ]
 
 
-# ----------------------------------------------------
-# 2. MULTIPLE SYMPTOMS → ONE FEATURE ROW → DISEASES
-# ----------------------------------------------------
-def predict_disease_from_multiple_symptoms(symptom_entries,
-                                           default_top_k_diseases=3):
+# ── 2. severity → (top_k, threshold) ─────────────────────────────────────────
+
+def severity_to_params(severity: int) -> tuple:
+    """Matches frontend scale: 0=none, 1-3=mild, 4-6=moderate, 7-10=severe"""
+    if severity <= 0:    return 0, 1.00   # don't activate anything
+    elif severity <= 3:  return 1, 0.52   # mild   — best single match
+    elif severity <= 6:  return 2, 0.45   # moderate — top 2
+    else:                return 3, 0.38   # severe — top 3, looser threshold
+
+
+# ── 3. main prediction function ───────────────────────────────────────────────
+
+def predict_disease_from_multiple_symptoms(
+    symptom_entries,
+    default_top_k_diseases=5,
+):
     """
-    symptom_entries: list of dicts like
-      {
-        "name": "fever",
-        "description": "high temperature with chills",
-        "severity": 3   # 1=mild, 2=moderate, 3=severe (optional)
-      }
+    Args:
+        symptom_entries: list of dicts with keys:
+            name        (str)
+            description (str)
+            severity    (int, 0-10)
+    Returns:
+        {
+            "per_symptom_matches": [...],
+            "disease_predictions": [{"disease": str, "probability": float}, ...]
+        }
     """
-    # Start with all-zero feature vector
-    input_data = {symptom: 0 for symptom in symptom_list}
-
+    input_data          = {symptom: 0 for symptom in symptom_list}
     per_symptom_matches = []
 
     for entry in symptom_entries:
-        name = entry.get("name", "").strip()
-        desc = entry.get("description", "").strip()
-        severity = entry.get("severity", 2)  # default = moderate
+        name     = entry.get("name", "").strip()
+        desc     = entry.get("description", "").strip()
+        severity = int(entry.get("severity", 5))
 
-        # Decide how many columns to match & how strict to be
-        top_k_symptoms_each, score_threshold = severity_to_params(severity)
+        top_k, threshold = severity_to_params(severity)
+        if top_k == 0:
+            per_symptom_matches.append({"input": entry, "matches": []})
+            continue
 
-        matches = match_symptoms(
-            symptom_name=name,
-            description=desc,
-            top_k=top_k_symptoms_each,
-            score_threshold=score_threshold,
-        )
+        matches = match_symptoms(name, desc, top_k=top_k, score_threshold=threshold)
 
-        # Turn matched columns on (still 0/1 for the model)
         for m in matches:
-            col = m["column"]
-            if col in input_data:
-                input_data[col] = 1
+            if m["column"] in input_data:
+                input_data[m["column"]] = 1
 
-        per_symptom_matches.append(
-            {
-                "input": {
-                    "name": name,
-                    "description": desc,
-                    "severity": severity,
-                },
-                "matches": matches,
-            }
-        )
+        per_symptom_matches.append({"input": entry, "matches": matches})
 
-    # Create one "row" for this patient
-    X = pd.DataFrame([input_data])
-
-    # Predict diseases
+    X     = pd.DataFrame([input_data])
     probs = disease_model.predict_proba(X)[0]
     classes = disease_model.classes_
 
-    sorted_idx = probs.argsort()[::-1]
-    top_idx = sorted_idx[:default_top_k_diseases]
-
-    disease_results = [
-        {
-            "disease": classes[i],
-            "probability": float(probs[i])
-        }
-        for i in top_idx
-    ]
+    top_idx = probs.argsort()[::-1][:default_top_k_diseases]
 
     return {
         "per_symptom_matches": per_symptom_matches,
-        "disease_predictions": disease_results,
+        "disease_predictions": [
+            {"disease": prettify_name(classes[i]), "probability": round(float(probs[i]), 4)}
+            for i in top_idx
+        ],
     }
 
 
-def severity_to_params(severity):
-    """
-    Map symptom severity (1–3) to:
-      - top_k_symptoms_each
-      - score_threshold
-    """
-    if severity <= 1:  # mild
-        top_k = 1
-        threshold = 0.50
-    elif severity == 2:  # moderate
-        top_k = 2
-        threshold = 0.45
-    else:  # severe (3 or more)
-        top_k = 3
-        threshold = 0.40
-    return top_k, threshold
-
-import httpx
+# ── 4. fetch symptoms from your backend ──────────────────────────────────────
 
 async def fetch_user_symptoms(user_id: str):
     url = f"http://localhost:8080/api/symptom/getAllPastWeek/{user_id}"
@@ -170,77 +119,49 @@ async def fetch_user_symptoms(user_id: str):
             response = await client.get(url)
             response.raise_for_status()
             data = response.json()
-        
-        # Convert to list of dicts with name, description, severity
-        symptoms = [
+        return [
             {
-                "name": item.get("name", ""),
+                "name":        item.get("name", ""),
                 "description": item.get("description", ""),
-                "severity": int(item.get("severity", 2))
+                "severity":    int(item.get("severity", 5)),
             }
             for item in data
         ]
-        return symptoms
-
     except Exception as e:
-        print(f"Error fetching symptoms from API: {e}")
+        print(f"Error fetching symptoms: {e}")
         return []
+    
+def prettify_name(name: str) -> str:
+    return name.replace("_", " ").title()
 
-# ----------------------------------------------------
-# 3. EXAMPLE USAGE
-# ----------------------------------------------------
+# ── 5. quick test ─────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
-
     user_symptoms = [
-    {
-        "name": "persistent sadness",
-        "description": "feeling sad or empty most of the day, nearly every day",
-        "severity": 3
-    },
-    {
-        "name": "loss of interest",
-        "description": "no longer enjoying activities that used to be pleasurable",
-        "severity": 3
-    },
-    {
-        "name": "fatigue",
-        "description": "low energy even after resting, feeling physically drained",
-        "severity": 2
-    },
-    {
-        "name": "sleep disturbance",
-        "description": "either difficulty falling asleep or waking up too early",
-        "severity": 2
-    },
-    {
-        "name": "changes in appetite",
-        "description": "noticeable weight loss or gain due to increased or decreased appetite",
-        "severity": 2
-    },
-    {
-        "name": "difficulty concentrating",
-        "description": "trouble focusing, making decisions, or remembering details",
-        "severity": 2
-    },
-    {
-        "name": "feelings of worthlessness",
-        "description": "persistent guilt or feeling like a burden to others",
-        "severity": 3
-    }
+    {"name": "abdominal pain",            "description": "pain that begins near the navel and shifts to the lower right abdomen", "severity": 9},
+    {"name": "loss of appetite",          "description": "sudden lack of desire to eat",                                           "severity": 7},
+    {"name": "nausea",                    "description": "feeling sick to the stomach following the onset of abdominal pain",      "severity": 7},
+    {"name": "vomiting",                  "description": "expelling stomach contents due to irritation of the digestive tract",    "severity": 6},
+    {"name": "fever",                     "description": "mild to moderate increase in body temperature",                          "severity": 6},
+    {"name": "abdominal tenderness",      "description": "pain when pressure is applied to the lower right abdomen",               "severity": 8},
+    {"name": "constipation",              "description": "difficulty passing stool or infrequent bowel movements",                 "severity": 5},
+    {"name": "bloating",                  "description": "swelling or fullness of the abdomen caused by gas buildup",              "severity": 5},
+    {"name": "inability to pass gas",     "description": "difficulty releasing gas due to intestinal blockage or irritation",      "severity": 6},
+    {"name": "pain when moving",          "description": "abdominal pain that worsens when walking, coughing, or moving",          "severity": 8}
 ]
+
     result = predict_disease_from_multiple_symptoms(
         symptom_entries=user_symptoms,
-        default_top_k_diseases=5
+        default_top_k_diseases=5,
     )
 
     print("=== Matched symptom columns ===")
     for item in result["per_symptom_matches"]:
-        print(f"\nUser symptom: {item['input']['name']} | {item['input']['description']}")
+        inp = item["input"]
+        print(f"\nUser symptom: {inp['name']} (severity={inp['severity']})")
         for m in item["matches"]:
             print(f"  -> {m['label']}  (col: {m['column']}, score: {m['score']:.3f})")
 
     print("\n=== Top disease predictions ===")
     for d in result["disease_predictions"]:
-        print(f"- {d['disease']} ({d['probability']:.3f})")
-
-
+        print(f"  - {d['disease']}  ({d['probability']:.3f})")

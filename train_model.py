@@ -1,4 +1,17 @@
-# train.py
+"""
+train_model.py
+
+Trains multiple classifiers on the merged synonym-reduced dataset,
+picks the best by weighted F1, and saves everything to model/.
+
+Input:  merged/merged_dataset_synonyms.csv
+        merged/symptom_list.pkl
+Output: model/disease_model.pkl
+        model/symptom_list.pkl     (copy — so predict.py has one source of truth)
+        model/test_data.csv
+        model/label_classes.pkl
+"""
+
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -26,228 +39,157 @@ from sklearn.metrics import (
     hamming_loss,
     jaccard_score,
     matthews_corrcoef,
-    classification_report,
 )
 
-# -----------------------------------------
-# PATHS
-# -----------------------------------------
-DATA_PATH = Path("data/merged_dataset_synonyms.csv")
-TEST_SAVE_PATH = Path("data/test_data.csv")
-MODEL_SAVE_PATH = Path("data/disease_model.pkl")      # best model
-SYMPTOM_LIST_PATH = Path("data/symptom_list.pkl")     # feature columns
+MERGED_DIR   = Path("merged")
+MODEL_DIR    = Path("model")
+MODEL_DIR.mkdir(exist_ok=True)
 
+INPUT_CSV         = MERGED_DIR / "merged_dataset_synonyms.csv"
+SYMPTOM_LIST_SRC  = MERGED_DIR / "symptom_list.pkl"
+MODEL_SAVE_PATH   = MODEL_DIR  / "disease_model.pkl"
+SYMPTOM_LIST_DST  = MODEL_DIR  / "symptom_list.pkl"
+TEST_DATA_PATH    = MODEL_DIR  / "test_data.csv"
+LABEL_CLASSES_PATH = MODEL_DIR / "label_classes.pkl"
 
-# -----------------------------------------
-# 1. LOAD SYMPTOM MATRIX
-# -----------------------------------------
-df = pd.read_csv(DATA_PATH)
+# ── 1. load ───────────────────────────────────────────────────────────────────
 
-# Features and target
+df = pd.read_csv(INPUT_CSV)
 X = df.drop(columns=["code", "name"], errors="ignore")
 y = df["name"]
+symptom_list = list(X.columns)
 
-symptom_list = list(X.columns)  # keep feature order for later / predict.py
+print(f"Dataset: {df.shape}  |  diseases: {y.nunique()}  |  symptoms: {len(symptom_list)}")
 
-# -----------------------------------------
-# 2. SPLIT UNIQUE vs DUPLICATED DISEASES
-# -----------------------------------------
+# ── 2. split (handle unique-only diseases) ───────────────────────────────────
+
 counts = y.value_counts()
+duplicated = counts[counts >= 2].index.tolist()
+unique     = counts[counts == 1].index.tolist()
 
-duplicated_diseases = counts[counts >= 2].index.tolist()
-unique_diseases = counts[counts == 1].index.tolist()
+df_dup = df[df["name"].isin(duplicated)]
+df_uni = df[df["name"].isin(unique)]
 
-df_duplicated = df[df["name"].isin(duplicated_diseases)]
-df_unique = df[df["name"].isin(unique_diseases)]
+X_dup = df_dup.drop(columns=["code", "name"], errors="ignore")
+y_dup = df_dup["name"]
+X_uni = df_uni.drop(columns=["code", "name"], errors="ignore")
+y_uni = df_uni["name"]
 
-X_dup = df_duplicated.drop(columns=["code", "name"], errors="ignore")
-y_dup = df_duplicated["name"]
+print(f"Duplicated diseases: {len(duplicated)}  ({len(df_dup)} rows)")
+print(f"Unique diseases:     {len(unique)}       ({len(df_uni)} rows)")
 
-X_unique = df_unique.drop(columns=["code", "name"], errors="ignore")
-y_unique = df_unique["name"]
+if len(duplicated) >= 2:
+    # ── preferred path: stratified split on duplicated rows only ──
+    X_train_dup, X_test, y_train_dup, y_test = train_test_split(
+        X_dup, y_dup, test_size=0.2, random_state=42, stratify=y_dup
+    )
+    X_train = pd.concat([X_train_dup, X_uni], ignore_index=True)
+    y_train = pd.concat([y_train_dup, y_uni], ignore_index=True)
+    # test_df lives in df_dup index space
+    test_df = df.loc[X_test.index].copy()
+else:
+    # ── fallback: all diseases are unique — plain random split ──
+    print("  ⚠ No duplicated diseases found; using plain random split on all data.")
+    X_all = df.drop(columns=["code", "name"], errors="ignore")
+    y_all = df["name"]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_all, y_all, test_size=0.2, random_state=42
+        # no stratify — each class has only 1 sample
+    )
+    test_df = df.loc[X_test.index].copy()
 
-print(f"Duplicated diseases: {len(duplicated_diseases)}")
-print(f"Unique diseases:     {len(unique_diseases)}")
-print(f"Duplicated rows:     {len(df_duplicated)}")
-print(f"Unique rows:         {len(df_unique)}")
+print(f"Train: {len(X_train)}  |  Test: {len(X_test)}")
 
-# -----------------------------------------
-# 3. TRAIN/TEST SPLIT ONLY FOR DUPLICATED DISEASES
-# -----------------------------------------
-X_train_dup, X_test, y_train_dup, y_test = train_test_split(
-    X_dup, y_dup, test_size=0.2, random_state=42, stratify=y_dup
-)
+test_df.to_csv(TEST_DATA_PATH, index=False)
+print(f"Test data saved → {TEST_DATA_PATH}")
 
-# Add unique diseases to training set only
-X_train = pd.concat([X_train_dup, X_unique], ignore_index=True)
-y_train = pd.concat([y_train_dup, y_unique], ignore_index=True)
+# ── 3. model definitions ─────────────────────────────────────────────────────
 
-print(f"Final train size: {len(X_train)}")
-print(f"Final test size:  {len(X_test)}")
+TRAIN_SAMPLE = 50_000
+if len(X_train) > TRAIN_SAMPLE:
+    X_train, _, y_train, _ = train_test_split(
+        X_train, y_train, train_size=TRAIN_SAMPLE, random_state=42
+        # no stratify here — some classes have only 1 sample
+    )
+    print(f"Subsampled train to {TRAIN_SAMPLE} rows")
 
-# -----------------------------------------
-# 4. SAVE THE TEST SET (full rows)
-# -----------------------------------------
-test_df = df.loc[X_test.index].copy()
-test_df.to_csv(TEST_SAVE_PATH, index=False)
-print(f"Saved test data to: {TEST_SAVE_PATH}")
-
-
-# -----------------------------------------
-# 5. DEFINE MULTIPLE MODELS (extended)
-# -----------------------------------------
 def make_models():
-    """
-    Return dict: name -> estimator
-    """
-    models = {}
-
-    # Trees / forests / boosting
-    models["DecisionTree"] = DecisionTreeClassifier(
-        random_state=42
-    )
-
-    models["RandomForest"] = RandomForestClassifier(
-        n_estimators=300, random_state=42, n_jobs=-1
-    )
-
-    models["ExtraTrees"] = ExtraTreesClassifier(
-        n_estimators=300, random_state=42, n_jobs=-1
-    )
-
-    models["GradientBoosting"] = GradientBoostingClassifier(random_state=42)
-
-    models["AdaBoost"] = AdaBoostClassifier(
-        n_estimators=300, random_state=42
-    )
-
-    # Linear / probabilistic models
-    models["LogReg_ovr"] = LogisticRegression(
-        max_iter=1000, n_jobs=-1, multi_class="ovr"
-    )
-
-    models["SGD_Log"] = SGDClassifier(
-        loss="log_loss",  # logistic regression
-        max_iter=1000,
-        n_jobs=-1,
-        random_state=42,
-    )
-
-    models["ComplementNB"] = ComplementNB()  # works well with 0/1 high-dim data
-
-    # k-NN
-    models["KNN_5"] = KNeighborsClassifier(
-        n_neighbors=5,
-        n_jobs=-1,
-    )
-
-    # Neural network
-    models["MLP_NeuralNet"] = MLPClassifier(
-        hidden_layer_sizes=(256, 128),
-        activation="relu",
-        max_iter=200,
-        random_state=42,
-    )
-
-    # Soft voting ensemble
-    voting_clf = VotingClassifier(
-        estimators=[
-            ("rf", RandomForestClassifier(n_estimators=200, random_state=42)),
-            ("lr", LogisticRegression(max_iter=1000, n_jobs=-1, multi_class="ovr")),
-            ("mlp", MLPClassifier(hidden_layer_sizes=(128,), max_iter=150, random_state=42)),
-        ],
-        voting="soft",
-        n_jobs=-1,
-    )
-    models["Voting_Soft"] = voting_clf
-
-    # Stacking ensemble
-    stacking_clf = StackingClassifier(
-        estimators=[
-            ("rf", RandomForestClassifier(n_estimators=200, random_state=42)),
-            ("lr", LogisticRegression(max_iter=1000, n_jobs=-1, multi_class="ovr")),
-        ],
-        final_estimator=LogisticRegression(max_iter=1000, n_jobs=-1),
-        passthrough=True,
-        n_jobs=-1,
-    )
-    models["Stacking"] = stacking_clf
-
-    return models
-
-
-# -----------------------------------------
-# 6. EVALUATION FUNCTION
-# -----------------------------------------
-def evaluate_model(name, model, X_train, y_train, X_test, y_test):
-    print(f"\n\n====================== {name} ======================")
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-
-    acc = accuracy_score(y_test, y_pred)
-    f1_macro = f1_score(y_test, y_pred, average="macro", zero_division=0)
-    f1_micro = f1_score(y_test, y_pred, average="micro", zero_division=0)
-    f1_weighted = f1_score(y_test, y_pred, average="weighted", zero_division=0)
-    ham = hamming_loss(y_test, y_pred)
-    jacc_macro = jaccard_score(y_test, y_pred, average="macro", zero_division=0)
-    jacc_weighted = jaccard_score(y_test, y_pred, average="weighted", zero_division=0)
-    mcc = matthews_corrcoef(y_test, y_pred)
-
-    print("Accuracy:        ", f"{acc:.4f}")
-    print("F1 macro:        ", f"{f1_macro:.4f}")
-    print("F1 micro:        ", f"{f1_micro:.4f}")
-    print("F1 weighted:     ", f"{f1_weighted:.4f}")
-    print("Hamming Loss:    ", f"{ham:.4f}")
-    print("Jaccard (macro): ", f"{jacc_macro:.4f}")
-    print("Jaccard (weight):", f"{jacc_weighted:.4f}")
-    print("MCC:             ", f"{mcc:.4f}")
-
-    # print("\nClassification report:")
-    # print(classification_report(y_test, y_pred, zero_division=0))
-
     return {
-        "name": name,
-        "estimator": model,
-        "accuracy": acc,
-        "f1_macro": f1_macro,
-        "f1_micro": f1_micro,
-        "f1_weighted": f1_weighted,
-        "hamming_loss": ham,
-        "jaccard_macro": jacc_macro,
-        "jaccard_weighted": jacc_weighted,
-        "mcc": mcc,
+        "DecisionTree": DecisionTreeClassifier(random_state=42),
+
+        "RandomForest": RandomForestClassifier(
+            n_estimators=100, random_state=42, n_jobs=-1
+        ),
+        "ExtraTrees": ExtraTreesClassifier(
+            n_estimators=100, random_state=42, n_jobs=-1
+        ),
+        #"LogReg_ovr": LogisticRegression(
+         #   max_iter=300, n_jobs=-1, multi_class="ovr"
+        #),
+        "SGD_Log": SGDClassifier(
+            loss="log_loss", max_iter=100, n_jobs=-1, random_state=42
+        ),
+        "ComplementNB": ComplementNB(),
+        #"MLP_NeuralNet": MLPClassifier(
+         #   hidden_layer_sizes=(128, ), activation="relu",
+          #  max_iter=50, random_state=42
+        #)
     }
 
+# ── 4. train & evaluate ───────────────────────────────────────────────────────
 
-# -----------------------------------------
-# 7. TRAIN & COMPARE ALL MODELS
-# -----------------------------------------
-models = make_models()
-results = []
+def evaluate(name, model):
+    print(f"\n{'='*20} {name} {'='*20}")
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
 
-for name, est in models.items():
-    metrics = evaluate_model(name, est, X_train, y_train, X_test, y_test)
-    results.append(metrics)
+    metrics = {
+        "name":          name,
+        "estimator":     model,
+        "accuracy":      accuracy_score(y_test, y_pred),
+        "f1_macro":      f1_score(y_test, y_pred, average="macro",    zero_division=0),
+        "f1_micro":      f1_score(y_test, y_pred, average="micro",    zero_division=0),
+        "f1_weighted":   f1_score(y_test, y_pred, average="weighted", zero_division=0),
+        "hamming_loss":  hamming_loss(y_test, y_pred),
+        "jaccard_macro": jaccard_score(y_test, y_pred, average="macro",    zero_division=0),
+        "jaccard_weighted": jaccard_score(y_test, y_pred, average="weighted", zero_division=0),
+        "mcc":           matthews_corrcoef(y_test, y_pred),
+    }
 
-# Show summary table
-results_df = pd.DataFrame(results).drop(columns=["estimator"])
-print("\n\n====================== SUMMARY TABLE ======================")
-print(results_df.sort_values(by="f1_weighted", ascending=False))
+    for k, v in metrics.items():
+        if k not in ("name", "estimator"):
+            print(f"  {k:<22}: {v:.4f}")
 
-# -----------------------------------------
-# 8. PICK BEST MODEL & SAVE IT + SYMPTOM LIST
-# -----------------------------------------
-best_row = max(results, key=lambda r: r["f1_weighted"])
-best_model = best_row["estimator"]
-best_name = best_row["name"]
+    return metrics
 
+results = [evaluate(n, m) for n, m in make_models().items()]
+
+# ── 5. summary & save best ────────────────────────────────────────────────────
+
+summary = pd.DataFrame(results).drop(columns=["estimator"])
+print("\n\n" + "="*55)
+print("SUMMARY TABLE (sorted by f1_weighted)")
+print("="*55)
+print(summary.sort_values("f1_weighted", ascending=False).to_string(index=False))
+
+best = max(results, key=lambda r: r["f1_weighted"])
+print(f"\nBest model: {best['name']}  (f1_weighted={best['f1_weighted']:.4f})")
+
+# save model
 with open(MODEL_SAVE_PATH, "wb") as f:
-    pickle.dump(best_model, f)
+    pickle.dump(best["estimator"], f)
+print(f"Saved → {MODEL_SAVE_PATH}")
 
-with open(SYMPTOM_LIST_PATH, "wb") as f:
-    pickle.dump(symptom_list, f)
+# copy symptom list into model/ so predict.py only needs to look in one place
+with open(SYMPTOM_LIST_SRC, "rb") as f:
+    symptom_list_data = pickle.load(f)
+with open(SYMPTOM_LIST_DST, "wb") as f:
+    pickle.dump(symptom_list_data, f)
+print(f"Saved → {SYMPTOM_LIST_DST}")
 
-print(f"\nBest model: {best_name}")
-print(f"Saved best model to:   {MODEL_SAVE_PATH}")
-print(f"Saved symptom list to: {SYMPTOM_LIST_PATH}")
+# save label classes
+with open(LABEL_CLASSES_PATH, "wb") as f:
+    pickle.dump(list(best["estimator"].classes_), f)
+print(f"Saved → {LABEL_CLASSES_PATH}")
+
+print("\nstep4_train.py done ✓")
