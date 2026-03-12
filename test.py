@@ -1,8 +1,15 @@
 import pandas as pd
-from pathlib import Path
+df = pd.read_csv("merged/merged_dataset_synonyms.csv")
+app = df[df["name"] == "diverticulosis"]
+print(f"Appendicitis rows: {len(app)}")
 
-for f in Path("cleaned_data").glob("*.csv"):
-    df = pd.read_csv(f, nrows=5)
-    if "name" in df.columns:
-        print(f"\n{f.name}:")
-        print(df["name"].tolist())
+# show which symptom columns are set to 1
+symptom_cols = [c for c in df.columns if c not in ("code", "name")]
+app_symptoms = app[symptom_cols].max()
+active = app_symptoms[app_symptoms > 0].index.tolist()
+print(f"\nActive symptom columns ({len(active)}):")
+for s in active:
+    print(f"  {s}")
+
+ab_cols = [c for c in df.columns if "abdominal" in c]
+print(ab_cols)

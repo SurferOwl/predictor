@@ -21,7 +21,7 @@ OUTPUT_CSV = MERGED_DIR / "merged_dataset_synonyms.csv"
 SYMPTOM_LIST_PATH = MERGED_DIR / "symptom_list.pkl"
 REPORT_PATH = MERGED_DIR / "symptom_merge_report.txt"
 
-SIM_THRESHOLD = 0.82   # lower = more aggressive merging (tune if needed)
+SIM_THRESHOLD = 0.7   # lower = more aggressive merging (tune if needed)
 
 # ── load ──────────────────────────────────────────────────────────────────────
 

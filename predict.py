@@ -24,7 +24,7 @@ symptom_embeddings = embedder.encode(
 
 # ── 1. match one symptom entry to dataset columns ────────────────────────────
 
-def match_symptoms(symptom_name, description="", top_k=5, score_threshold=0.4):
+def match_symptoms(symptom_name, description="", top_k=5, score_threshold=0.35):
     query = symptom_name.strip()
     if description:
         query += ". " + description.strip()
@@ -98,8 +98,8 @@ def predict_disease_from_multiple_symptoms(
 
         per_symptom_matches.append({"input": entry, "matches": matches})
 
-    X     = pd.DataFrame([input_data])
-    probs = disease_model.predict_proba(X)[0]
+    X = pd.DataFrame([input_data])
+    probs = disease_model.predict_proba(X.values)[0]
     classes = disease_model.classes_
 
     top_idx = probs.argsort()[::-1][:default_top_k_diseases]
@@ -138,21 +138,19 @@ async def fetch_user_symptoms(user_id: str):
 
 if __name__ == "__main__":
     user_symptoms = [
-    {"name": "abdominal pain",            "description": "pain that begins near the navel and shifts to the lower right abdomen", "severity": 9},
-    {"name": "loss of appetite",          "description": "sudden lack of desire to eat",                                           "severity": 7},
-    {"name": "nausea",                    "description": "feeling sick to the stomach following the onset of abdominal pain",      "severity": 7},
-    {"name": "vomiting",                  "description": "expelling stomach contents due to irritation of the digestive tract",    "severity": 6},
-    {"name": "fever",                     "description": "mild to moderate increase in body temperature",                          "severity": 6},
-    {"name": "abdominal tenderness",      "description": "pain when pressure is applied to the lower right abdomen",               "severity": 8},
-    {"name": "constipation",              "description": "difficulty passing stool or infrequent bowel movements",                 "severity": 5},
-    {"name": "bloating",                  "description": "swelling or fullness of the abdomen caused by gas buildup",              "severity": 5},
-    {"name": "inability to pass gas",     "description": "difficulty releasing gas due to intestinal blockage or irritation",      "severity": 6},
-    {"name": "pain when moving",          "description": "abdominal pain that worsens when walking, coughing, or moving",          "severity": 8}
+    {"name": "frequent urination",      "description": "needing to urinate more often than usual, especially at night",     "severity": 7},
+    {"name": "excessive thirst",        "description": "feeling very thirsty even after drinking water",                    "severity": 7},
+    {"name": "fatigue",                 "description": "feeling tired and lacking energy throughout the day",               "severity": 6},
+    {"name": "blurred vision",          "description": "difficulty seeing clearly, vision becomes unfocused",               "severity": 5},
+    {"name": "slow healing wounds",     "description": "cuts and bruises take much longer than usual to heal",              "severity": 6},
+    {"name": "tingling in hands",       "description": "numbness or tingling sensation in hands and feet",                  "severity": 5},
+    {"name": "increased hunger",        "description": "feeling hungry even after eating a full meal",                      "severity": 6},
+    {"name": "unexplained weight loss", "description": "losing weight without trying or changing diet",                     "severity": 5},
 ]
 
     result = predict_disease_from_multiple_symptoms(
         symptom_entries=user_symptoms,
-        default_top_k_diseases=5,
+        default_top_k_diseases=10,
     )
 
     print("=== Matched symptom columns ===")
