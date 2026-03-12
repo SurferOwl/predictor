@@ -27,6 +27,7 @@ from sklearn.ensemble import (
     VotingClassifier,
     StackingClassifier,
     AdaBoostClassifier,
+    HistGradientBoostingClassifier
 )
 from sklearn.linear_model import LogisticRegression, SGDClassifier
 from sklearn.neural_network import MLPClassifier
@@ -103,45 +104,38 @@ print(f"Train: {len(X_train)}  |  Test: {len(X_test)}")
 test_df.to_csv(TEST_DATA_PATH, index=False)
 print(f"Test data saved → {TEST_DATA_PATH}")
 
-# ── 3. model definitions ─────────────────────────────────────────────────────
+# ── 2.5 convert to sparse ─────────────────────────────────────────────────────
+from scipy.sparse import csr_matrix
+X_train_sp = csr_matrix(X_train)
+X_test_sp  = csr_matrix(X_test)
 
-TRAIN_SAMPLE = 50_000
-if len(X_train) > TRAIN_SAMPLE:
-    X_train, _, y_train, _ = train_test_split(
-        X_train, y_train, train_size=TRAIN_SAMPLE, random_state=42
-        # no stratify here — some classes have only 1 sample
-    )
-    print(f"Subsampled train to {TRAIN_SAMPLE} rows")
+# ── 3. model definitions ─────────────────────────────────────────────────────
 
 def make_models():
     return {
-        "DecisionTree": DecisionTreeClassifier(random_state=42),
-
+        "HistGBT": HistGradientBoostingClassifier(
+            max_iter=50, random_state=42, early_stopping=False, verbose=1
+        ),
         "RandomForest": RandomForestClassifier(
             n_estimators=100, random_state=42, n_jobs=-1
         ),
-        "ExtraTrees": ExtraTreesClassifier(
-            n_estimators=100, random_state=42, n_jobs=-1
-        ),
-        #"LogReg_ovr": LogisticRegression(
-         #   max_iter=300, n_jobs=-1, multi_class="ovr"
-        #),
-        "SGD_Log": SGDClassifier(
-            loss="log_loss", max_iter=100, n_jobs=-1, random_state=42
+        "LogReg_ovr": LogisticRegression(
+            max_iter=300, n_jobs=-1, multi_class="ovr", verbose=1
         ),
         "ComplementNB": ComplementNB(),
-        #"MLP_NeuralNet": MLPClassifier(
-         #   hidden_layer_sizes=(128, ), activation="relu",
-          #  max_iter=50, random_state=42
-        #)
     }
+
+# sparse-compatible models
+SPARSE_MODELS = {"LogReg_ovr", "ComplementNB"}
 
 # ── 4. train & evaluate ───────────────────────────────────────────────────────
 
 def evaluate(name, model):
     print(f"\n{'='*20} {name} {'='*20}")
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+    X_tr = X_train_sp if name in SPARSE_MODELS else X_train
+    X_te = X_test_sp  if name in SPARSE_MODELS else X_test
+    model.fit(X_tr, y_train)
+    y_pred = model.predict(X_te)
 
     metrics = {
         "name":          name,

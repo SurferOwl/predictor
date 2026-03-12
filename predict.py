@@ -58,6 +58,9 @@ def severity_to_params(severity: int) -> tuple:
 
 # ── 3. main prediction function ───────────────────────────────────────────────
 
+def prettify_name(name: str) -> str:
+    return name.replace("_", " ").title()
+
 def predict_disease_from_multiple_symptoms(
     symptom_entries,
     default_top_k_diseases=5,
@@ -130,9 +133,6 @@ async def fetch_user_symptoms(user_id: str):
     except Exception as e:
         print(f"Error fetching symptoms: {e}")
         return []
-    
-def prettify_name(name: str) -> str:
-    return name.replace("_", " ").title()
 
 # ── 5. quick test ─────────────────────────────────────────────────────────────
 
