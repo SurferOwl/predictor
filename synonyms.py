@@ -21,7 +21,21 @@ OUTPUT_CSV = MERGED_DIR / "merged_dataset_synonyms.csv"
 SYMPTOM_LIST_PATH = MERGED_DIR / "symptom_list.pkl"
 REPORT_PATH = MERGED_DIR / "symptom_merge_report.txt"
 
-SIM_THRESHOLD = 0.7   # lower = more aggressive merging (tune if needed)
+SIM_THRESHOLD = 0.92
+
+NEVER_MERGE = {
+    frozenset(["hunger", "loss_of_appetite"]),
+    frozenset(["hunger", "decreased_appetite"]),
+    frozenset(["hunger", "loss_of_appetite_lk"]),
+    frozenset(["hunger", "loss_of_appetite_r"]),
+    frozenset(["hunger", "decreased_appetite_lk"]),
+    frozenset(["low_blood_pressure", "high_blood_pressure"]),
+    frozenset(["low_blood_pressure_r", "high_blood_pressure"]),
+    frozenset(["low_blood_pressure_r", "high_blood_pressure_r"]),
+    frozenset(["fast_heart_rate", "slow_heart_rate"]),
+    frozenset(["fast_heart_rate", "too_slow__bradycardia__heart_rate"]),
+    frozenset(["rapid_heart_rate", "slow_heart_rate"]),
+}
 
 # ── load ──────────────────────────────────────────────────────────────────────
 
@@ -69,7 +83,9 @@ def union(i, j):
 for i in range(n):
     for j in range(i + 1, n):
         if float(sim_matrix[i, j].item()) >= SIM_THRESHOLD:
-            union(i, j)
+            pair = frozenset([orig_symptom_cols[i], orig_symptom_cols[j]])
+            if pair not in NEVER_MERGE:
+                union(i, j)
 
 clusters = {}
 for i in range(n):

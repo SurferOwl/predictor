@@ -138,14 +138,14 @@ async def fetch_user_symptoms(user_id: str):
 
 if __name__ == "__main__":
     user_symptoms = [
-    {"name": "frequent urination",      "description": "needing to urinate more often than usual, especially at night",     "severity": 7},
-    {"name": "excessive thirst",        "description": "feeling very thirsty even after drinking water",                    "severity": 7},
-    {"name": "fatigue",                 "description": "feeling tired and lacking energy throughout the day",               "severity": 6},
-    {"name": "blurred vision",          "description": "difficulty seeing clearly, vision becomes unfocused",               "severity": 5},
-    {"name": "slow healing wounds",     "description": "cuts and bruises take much longer than usual to heal",              "severity": 6},
-    {"name": "tingling in hands",       "description": "numbness or tingling sensation in hands and feet",                  "severity": 5},
-    {"name": "increased hunger",        "description": "feeling hungry even after eating a full meal",                      "severity": 6},
-    {"name": "unexplained weight loss", "description": "losing weight without trying or changing diet",                     "severity": 5},
+    {"name": "headache",                "description": "pressure-like headache especially in the morning",                  "severity": 6},
+    {"name": "dizziness",               "description": "feeling lightheaded or unsteady",                                    "severity": 5},
+    {"name": "blurred vision",          "description": "vision becomes less clear at times",                                 "severity": 5},
+    {"name": "chest pain",              "description": "tightness or discomfort in the chest",                               "severity": 6},
+    {"name": "shortness of breath",     "description": "difficulty breathing during activity or rest",                       "severity": 5},
+    {"name": "fatigue",                 "description": "low energy and tiredness during the day",                            "severity": 5},
+    {"name": "nosebleeds",              "description": "bleeding from the nose without obvious injury",                      "severity": 4},
+    {"name": "palpitations",            "description": "feeling the heartbeat strongly or irregularly",                     "severity": 5},
 ]
 
     result = predict_disease_from_multiple_symptoms(
